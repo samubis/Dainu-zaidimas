@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Dainų žodžių žaidimas</title>
+  <meta name="theme-color" content="#111827" />
+  <style>
+    :root{
+      --bg1:#0f172a;
+      --bg2:#1e293b;
+      --card:rgba(255,255,255,.10);
+      --card-2:rgba(255,255,255,.14);
+      --text:#f8fafc;
+      --muted:#cbd5e1;
+      --accent:#22c55e;
+      --accent2:#3b82f6;
+      --danger:#ef4444;
+      --warning:#f59e0b;
+      --shadow:0 14px 40px rgba(0,0,0,.28);
+      --radius:24px;
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{
+      margin:0;padding:0;min-height:100%;
+      font-family: Inter, Arial, Helvetica, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top left, #334155 0%, transparent 35%),
+        radial-gradient(circle at top right, #1d4ed8 0%, transparent 30%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+    }
+    body{display:flex;justify-content:center}
+    .app{
+      width:min(100%, 520px);
+      min-height:100vh;
+      padding:16px;
+    }
+    .glass{
+      backdrop-filter: blur(14px);
+      background: var(--card);
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:var(--shadow);
+      border-radius:var(--radius);
+    }
+    .hero{
+      padding:18px;
+      margin-bottom:14px;
+    }
+    .title{
+      margin:0;
+      font-size:28px;
+      line-height:1.05;
+      font-weight:900;
+      letter-spacing:-.03em;
+    }
+    .subtitle{
+      color:var(--muted);
+      margin:8px 0 0;
+      font-size:15px;
+      line-height:1.45;
+    }
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+      margin-top:16px;
+    }
+    .stat{
+      background:var(--card-2);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:18px;
+      padding:12px;
+      text-align:center;
+    }
+    .stat .k{
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:5px;
+    }
+    .stat .v{
+      font-size:24px;
+      font-weight:800;
+    }
+    .main{
+      padding:20px 16px 16px;
+      text-align:center;
+      margin-bottom:14px;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.12);
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:16px;
+    }
+    .word{
+      min-height:120px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      font-size:clamp(36px, 12vw, 72px);
+      font-weight:900;
+      line-height:1.02;
+      letter-spacing:-.04em;
+      word-break:break-word;
+      padding:0 4px;
+    }
+    .timer-wrap{
+      margin:14px auto 18px;
+      width:150px;height:150px;
+      position:relative;
+    }
+    .ring{
+      width:100%;height:100%;
+      border-radius:50%;
+      background:conic-gradient(var(--accent2) 0deg, rgba(255,255,255,.10) 0deg);
+      display:flex;align-items:center;justify-content:center;
+      transition:background .25s linear;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);
+    }
+    .ring::after{
+      content:"";
+      width:118px;height:118px;
+      border-radius:50%;
+      background:linear-gradient(180deg, rgba(15,23,42,.95), rgba(30,41,59,.94));
+      position:absolute;
+      z-index:0;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
+    }
+    .time{
+      position:relative;
+      z-index:1;
+      font-size:40px;
+      font-weight:900;
+    }
+    .time.small-alert{color:var(--warning)}
+    .time.danger{color:#fecaca}
+    .buttons{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+      margin-top:2px;
+    }
+    button{
+      border:none;
+      border-radius:18px;
+      padding:16px 18px;
+      width:100%;
+      font-size:18px;
+      font-weight:800;
+      cursor:pointer;
+      box-shadow:var(--shadow);
+    }
+    .btn-primary{background:linear-gradient(180deg,#2563eb,#1d4ed8);color:white}
+    .btn-next{background:linear-gradient(180deg,#22c55e,#16a34a);color:white}
+    .btn-stop{background:rgba(255,255,255,.12);color:white}
+    .btn-reset{background:linear-gradient(180deg,#ef4444,#dc2626);color:white}
+    .toggles{
+      display:flex;
+      justify-content:center;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:14px;
+      color:var(--muted);
+      font-size:14px;
+    }
+    .toggle{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      background:rgba(255,255,255,.08);
+      padding:10px 12px;
+      border-radius:999px;
+    }
+    input[type="checkbox"]{
+      width:18px;height:18px;
+    }
+    .status{
+      margin-top:14px;
+      font-size:16px;
+      font-weight:700;
+      min-height:24px;
+    }
+    .status.timeout{color:#fecaca}
+    .used-card{padding:16px;}
+    .used-title{
+      margin:0 0 10px;
+      font-size:19px;
+      font-weight:800;
+    }
+    .used-list{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    .chip{
+      border-radius:999px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.08);
+      padding:9px 12px;
+      font-size:14px;
+      font-weight:700;
+      color:#e2e8f0;
+    }
+    .empty{
+      color:var(--muted);
+      margin:0;
+      font-size:14px;
+    }
+    .footer{
+      text-align:center;
+      color:#cbd5e1;
+      font-size:12px;
+      padding:14px 0 24px;
+      opacity:.92;
+    }
+    .pulse{
+      animation:pulse .7s ease-in-out 2;
+    }
+    @keyframes pulse{
+      0%{transform:scale(1)}
+      50%{transform:scale(1.03)}
+      100%{transform:scale(1)}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="glass hero">
+      <h1 class="title">Dainų žodžių žaidimas 🎤</h1>
+      <p class="subtitle">Spausk pradėti, gauk žodį ir per 10 sekundžių sudainuok dainą, kurioje tas žodis yra.</p>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="k">Liko</div>
+          <div class="v" id="leftCount">100</div>
+        </div>
+        <div class="stat">
+          <div class="k">Panaudota</div>
+          <div class="v" id="usedCount">0</div>
+        </div>
+        <div class="stat">
+          <div class="k">Laikas</div>
+          <div class="v" id="topTimer">10s</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="glass main" id="mainCard">
+      <div class="badge">🎶 Vakarėlio režimas</div>
+      <div class="word" id="currentWord">Spausk „Pradėti“</div>
+
+      <div class="timer-wrap">
+        <div class="ring" id="ring">
+          <div class="time" id="bigTimer">10</div>
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button class="btn-primary" id="startBtn">Pradėti / paleisti 10 s</button>
+        <button class="btn-next" id="nextBtn">Kitas žodis</button>
+        <button class="btn-stop" id="stopBtn">Sustabdyti</button>
+        <button class="btn-reset" id="resetBtn">Pradėti iš naujo</button>
+      </div>
+
+      <div class="toggles">
+        <label class="toggle"><input type="checkbox" id="soundToggle" checked> Garsas</label>
+        <label class="toggle"><input type="checkbox" id="autoNextToggle"> Auto kitas žodis</label>
+      </div>
+
+      <div class="status" id="status"></div>
+    </section>
+
+    <section class="glass used-card">
+      <h2 class="used-title">Jau buvę žodžiai</h2>
+      <p class="empty" id="emptyText">Kol kas dar nė vieno.</p>
+      <div class="used-list" id="usedList"></div>
+    </section>
+
+    <div class="footer">Veikia telefone be hostingo. Gali išsisaugoti į Home Screen.</div>
+  </div>
+
+<script>
+const WORDS = [
+  "lietus","meile","naktis","saule","dangus","svajone","sirdis","kelias","vejas","jura",
+  "vasara","ziema","ruduo","pavasaris","laikas","rytas","vakaras","zvaigzdes","menulis","ugnis",
+  "diena","akys","rankos","laukai","miestas","gatve","namai","langas","balsas","tyla",
+  "juokas","asaros","toli","arti","sapnai","sokis","muzika","ritmas","draugas","vienas",
+  "kartu","laisve","laukti","gris","isejau","ateik","apkabink","pasakyk","atsimink","sugrizk",
+  "vel","siandien","rytoj","vakar","amzinai","kelione","sekunde","minute","valanda","jausmai",
+  "aistra","viltys","laime","skausmas","garsai","spalvos","liudna","linksma","angelas","rojus",
+  "dienos","nakti","veidai","upes","kalnai","debesis","audra","ramybe","tolyn","artyn",
+  "begu","skrendu","krentu","sugauk","paleisk","palauk","sviesa","tamsa","sniegas","geles",
+  "kvepia","meiles","buciuoju","sirdimi","paslaptys","viltis","svajoti","laukimas","svajos","ilgesys"
+];
+
+let shuffled = [];
+let currentIndex = -1;
+let used = [];
+let timeLeft = 10;
+let timer = null;
+let audioCtx = null;
+
+const el = {
+  currentWord: document.getElementById("currentWord"),
+  leftCount: document.getElementById("leftCount"),
+  usedCount: document.getElementById("usedCount"),
+  topTimer: document.getElementById("topTimer"),
+  bigTimer: document.getElementById("bigTimer"),
+  ring: document.getElementById("ring"),
+  status: document.getElementById("status"),
+  usedList: document.getElementById("usedList"),
+  emptyText: document.getElementById("emptyText"),
+  soundToggle: document.getElementById("soundToggle"),
+  autoNextToggle: document.getElementById("autoNextToggle"),
+  mainCard: document.getElementById("mainCard")
+};
+
+function shuffle(a){
+  const arr = [...a];
+  for(let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function initAudio(){
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+  } catch(e){}
+}
+
+function beep(freq = 740, duration = 180, volume = 0.15, delay = 0){
+  if(!el.soundToggle.checked) return;
+  try{
+    initAudio();
+    setTimeout(() => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(volume, audioCtx.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration / 1000);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration / 1000 + 0.01);
+    }, delay);
+  } catch(e){}
+}
+
+function timeoutSound(){
+  beep(720, 160, 0.14, 0);
+  beep(720, 160, 0.14, 190);
+  beep(980, 260, 0.18, 380);
+}
+
+function updateRing(){
+  const deg = (timeLeft / 10) * 360;
+  el.ring.style.background = `conic-gradient(${timeLeft <= 3 ? '#ef4444' : '#3b82f6'} ${deg}deg, rgba(255,255,255,.10) ${deg}deg)`;
+}
+
+function render(){
+  const currentWord = currentIndex >= 0 && currentIndex < shuffled.length ? shuffled[currentIndex] : null;
+  el.currentWord.textContent = currentWord || "Spausk „Pradėti“";
+  el.leftCount.textContent = Math.max(shuffled.length - (currentIndex + 1), 0);
+  el.usedCount.textContent = used.length;
+  el.topTimer.textContent = timeLeft + "s";
+  el.bigTimer.textContent = String(timeLeft);
+
+  el.bigTimer.classList.remove("small-alert","danger");
+  if (timeLeft <= 5 && timeLeft > 3) el.bigTimer.classList.add("small-alert");
+  if (timeLeft <= 3) el.bigTimer.classList.add("danger");
+
+  updateRing();
+
+  el.usedList.innerHTML = "";
+  el.emptyText.style.display = used.length ? "none" : "block";
+  used.forEach(w => {
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    chip.textContent = w;
+    el.usedList.appendChild(chip);
+  });
+
+  if(currentIndex >= shuffled.length){
+    el.currentWord.textContent = "Visi žodžiai baigėsi 🎉";
+    el.status.textContent = "Baigta. Spausk „Pradėti iš naujo“.";
+    el.status.className = "status";
+    el.bigTimer.textContent = "0";
+    el.topTimer.textContent = "0s";
+    el.ring.style.background = "conic-gradient(#22c55e 360deg, rgba(255,255,255,.10) 0deg)";
+  }
+}
+
+function stopTimer(){
+  if(timer){
+    clearInterval(timer);
+    timer = null;
+  }
+}
+
+function flashCard(){
+  el.mainCard.classList.remove("pulse");
+  void el.mainCard.offsetWidth;
+  el.mainCard.classList.add("pulse");
+}
+
+function nextWord(){
+  stopTimer();
+
+  if(currentIndex >= 0 && currentIndex < shuffled.length){
+    used.push(shuffled[currentIndex]);
+  }
+
+  currentIndex += 1;
+  timeLeft = 10;
+  el.status.textContent = "";
+
+  if(currentIndex >= shuffled.length){
+    render();
+    return;
+  }
+
+  flashCard();
+  beep(660, 120, 0.08, 0);
+  render();
+  startTimer();
+}
+
+function startTimer(){
+  initAudio();
+
+  if(currentIndex === -1){
+    nextWord();
+    return;
+  }
+
+  if(currentIndex >= shuffled.length){
+    return;
+  }
+
+  stopTimer();
+  if(timeLeft <= 0) timeLeft = 10;
+  el.status.textContent = "Dainuok!";
+  el.status.className = "status";
+  render();
+
+  timer = setInterval(() => {
+    timeLeft -= 1;
+
+    if(timeLeft === 3 || timeLeft === 2 || timeLeft === 1){
+      beep(540 + (3 - timeLeft) * 90, 110, 0.07, 0);
+    }
+
+    if(timeLeft <= 0){
+      timeLeft = 0;
+      stopTimer();
+      timeoutSound();
+      el.status.textContent = "Laikas baigėsi!";
+      el.status.className = "status timeout";
+      render();
+
+      if(el.autoNextToggle.checked){
+        setTimeout(() => nextWord(), 1200);
+      }
+      return;
+    }
+
+    render();
+  }, 1000);
+}
+
+function resetGame(){
+  stopTimer();
+  shuffled = shuffle(WORDS);
+  currentIndex = -1;
+  used = [];
+  timeLeft = 10;
+  el.status.textContent = "";
+  render();
+}
+
+document.getElementById("startBtn").addEventListener("click", startTimer);
+document.getElementById("nextBtn").addEventListener("click", nextWord);
+document.getElementById("stopBtn").addEventListener("click", () => {
+  stopTimer();
+  el.status.textContent = "Sustabdyta.";
+  el.status.className = "status";
+});
+document.getElementById("resetBtn").addEventListener("click", resetGame);
+
+resetGame();
+</script>
+</body>
+</html>
